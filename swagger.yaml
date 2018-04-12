@@ -1,0 +1,564 @@
+swagger: "2.0"
+info:
+  description: ""
+  version: "1.0.0"
+  title: "casa"
+  termsOfService: ""
+  contact:
+    email: "mange_magnusson@hotmail.com"
+  license:
+    name: "Apache 2.0"
+    url: "http://www.apache.org/licenses/LICENSE-2.0.html"
+host: "tobedecided"
+basePath: "/v1"
+schemes:
+- "http"
+consumes:
+- "application/json"
+produces:
+- "application/json"
+paths:
+  /alerts:
+    get:
+      tags:
+      - "alerts"
+      summary: "Gets all alerts"
+      description: ""
+      operationId: "listAlerts"
+      responses:
+        200:
+          description: "Ok"
+          schema:
+            $ref: "#/definitions/alerts"
+        default:
+          description: error
+          schema:
+            $ref: "#/definitions/error"
+  /alarms/{alarmId}/alerts:
+    get:
+      tags:
+      - "alerts"
+      summary: "Gets all alerts for the alarm"
+      description: ""
+      operationId: "listAlertsForAlarm"
+      parameters:
+      - in: "path"
+        name: "alarmId"
+        type: "string"
+        required: true
+        description: Id of the alarm
+      responses:
+        200:
+          description: "Ok"
+          schema:
+            $ref: "#/definitions/alerts"
+        default:
+          description: error
+          schema:
+            $ref: "#/definitions/error"
+  /alarms/{alarmId}/alerts/{id}:
+    post:
+      tags:
+      - "alerts"
+      summary: "Alert about something"
+      description: ""
+      operationId: "addAlert"
+      parameters:
+      - in: "path"
+        name: "alarmId"
+        type: "string"
+        required: true
+        description: Id of the alarm
+      - in: "path"
+        name: "id"
+        type: "string"
+        required: true
+        description: "Id of the alert"
+      - in: "body"
+        name: "body"
+        description: ""
+        required: true
+        schema:
+          $ref: "#/definitions/addAlert"
+      responses:
+        405:
+          description: "Invalid input"
+        default:
+          description: error
+          schema:
+            $ref: "#/definitions/error"
+    get:
+      tags:
+      - "alerts"
+      summary: "Get alerts for the specified id"
+      description: ""
+      operationId: "listAlertsById"
+      parameters:
+      - in: "path"
+        name: "alarmId"
+        type: "string"
+        required: true
+        description: Id of the alarm
+      - in: "path"
+        name: "id"
+        type: "string"
+        required: true
+        description: "Id of the alert"
+      responses:
+        200:
+          description: "Ok"
+          schema:
+            $ref: "#/definitions/alerts"
+        default:
+          description: error
+          schema:
+            $ref: "#/definitions/error"
+  /alarms:
+    get:
+      tags:
+      - "alarms"
+      summary: "Gets all alarms"
+      description: ""
+      operationId: "listAlarms"
+      responses:
+        200:
+          description: "Ok"
+          schema:
+            $ref: "#/definitions/alarms"
+        default:
+          description: error
+          schema:
+            $ref: "#/definitions/error"
+    post:
+      tags:
+      - "alarms"
+      summary: "Create/Update the alarm"
+      description: ""
+      operationId: "createAlarm"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Crete a new alarm"
+        required: true
+        schema:
+          $ref: "#/definitions/createAlarm"
+      responses:
+        201:
+          description: "Ok"
+          headers:
+            Access-Control-Allow-Origin:
+              description: Allow access control
+              type: string
+              default: "*"
+        405:
+          description: "Invalid input"
+        default:
+          description: error
+          schema:
+            $ref: "#/definitions/error"
+            
+  /alarms/{id}:
+    get:
+      tags:
+      - "alarms"
+      summary: "Get the alarm"
+      description: ""
+      operationId: "getAlarm"
+      parameters:
+      - in: "path"
+        name: "id"
+        type: "string"
+        required: true
+        description: "Id of the alarm"
+      responses:
+        200:
+          description: "Ok"
+          schema:
+            $ref: "#/definitions/alarm"
+        default:
+          description: error
+          schema:
+            $ref: "#/definitions/error"
+    delete:
+      tags:
+      - "alarms"
+      summary: "Delete the alarm"
+      description: ""
+      operationId: "deleteAlarm"
+      parameters:
+      - in: "path"
+        name: "id"
+        type: "string"
+        required: true
+        description: "Id of the alarm"
+      responses:
+        204:
+          description: "Ok"
+        default:
+          description: error
+          schema:
+            $ref: "#/definitions/error"
+  /alarms/{id}/toggle/:
+    get:
+      tags:
+      - "alarms"
+      summary: "List togglings"
+      description: ""
+      operationId: "listAlarmLogs"
+      parameters:
+      - in: "path"
+        name: "id"
+        type: "string"
+        required: true
+        description: "Id of the alarm"
+      responses:
+        200:
+          description: "Ok"
+          schema:
+            $ref: "#/definitions/toggleAlarms"
+        default:
+          description: error
+          schema:
+            $ref: "#/definitions/error"
+    post:
+      tags:
+      - "alarms"
+      summary: "Toggle the alarm"
+      description: ""
+      operationId: "toggleAlarm"
+      parameters:
+      - in: "path"
+        name: "id"
+        type: "string"
+        required: true
+        description: Id of the alarm
+      - in: "body"
+        name: "body"
+        description: "Toggle alarm"
+        required: true
+        schema:
+          $ref: "#/definitions/setToggleAlarm"
+      responses:
+        201:
+          description: "Ok"
+          schema:
+            $ref: "#/definitions/toggleAlarm"
+          headers:
+            Access-Control-Allow-Origin:
+              description: Allow access control
+              type: string
+              default: "*"
+        405:
+          description: "Invalid input"
+        default:
+          description: error
+          schema:
+            $ref: "#/definitions/error"
+  /discovery:
+    post:
+      tags:
+      - "discovery"
+      summary: "Discover Axis devices"
+      description: ""
+      operationId: "newDiscovery"
+      responses:
+        200:
+          description: "ok"
+        default:
+          description: error
+          schema:
+            $ref: "#/definitions/error"
+    get:
+      tags:
+      - "discovery"
+      summary: "List discovered Axis devices"
+      description: ""
+      operationId: "listDiscoveredCameras"
+      responses:
+        200:
+          description: "ok"
+          schema:
+            $ref: "#/definitions/discoveredDevices"
+        default:
+          description: error
+          schema:
+            $ref: "#/definitions/error"
+  /discovery/devices/{serialNumber}/credentials:
+    post:
+      tags:
+      - "discovery"
+      summary: "Discover Axis devices"
+      description: ""
+      operationId: "setDeviceCredentialsForDiscovery"
+      parameters:
+      - in: "path"
+        name: "serialNumber"
+        type: "string"
+        required: true
+        description: The serialNumber of the device.
+      - in: "body"
+        name: "body"
+        description: "Sets credentials for a discovered device"
+        required: true
+        schema:
+          $ref: '#/definitions/credentials'
+      responses:
+        200:
+          description: "ok"
+        401:
+          description: "Unauthorized"
+        404:
+          description: "Not found"
+        default:
+          description: error
+          schema:
+            $ref: "#/definitions/error"
+  /devices:
+    post:
+      tags:
+      - "devices"
+      summary: "Add a device"
+      description: ""
+      operationId: "addDevice"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Toggle alarms"
+        required: true
+        schema:
+          $ref: '#/definitions/addDevice'
+      responses:
+        200:
+          description: "ok"
+        default:
+          description: error
+          schema:
+            $ref: "#/definitions/error"
+    get:
+      tags:
+      - "devices"
+      summary: "List of added devices"
+      description: ""
+      operationId: "listOfDevices"
+      responses:
+        200:
+          description: "ok"
+          schema:
+            $ref: "#/definitions/devices"
+        default:
+          description: error
+          schema:
+            $ref: "#/definitions/error"
+  /devices/{id}:
+    delete:
+      tags:
+      - "devices"
+      summary: "Delete device"
+      description: ""
+      operationId: "deleteDevice"
+      parameters:
+      - in: "path"
+        name: "id"
+        type: "string"
+        required: true
+        description: Id of the device
+      responses:
+        200:
+          description: "ok"
+        default:
+          description: error
+          schema:
+            $ref: "#/definitions/error"
+definitions:
+  addAlert:
+    type: "object"
+    properties:
+      shortDescription:
+        type: "string"
+      description:
+        type: "string"
+  alerts:
+    type: "array"
+    items:
+      $ref: "#/definitions/alert"
+  alert:
+    type: "object"
+    properties:
+      id:
+        type: "string"
+      alarmId:
+        type: "string"
+      shortDescription:
+        type: "string"
+      description:
+        type: "string"
+      date:
+        type: "string"
+        format: "date-time"
+  alarms:
+    type: "array"
+    items:
+      $ref: "#/definitions/alarm"
+  setToggleAlarm:
+    type: "object"
+    properties:
+      'on':
+        type: "boolean"
+  toggleAlarms:
+    type: "array"
+    items:
+      $ref: "#/definitions/toggleAlarm"
+  toggleAlarm:
+    type: "object"
+    properties:
+      alarmId:
+        type: string
+      date:
+        type: "string"
+        format: "date-time"
+      'on':
+        type: "boolean"
+  createAlarm:
+    type: "object"
+    properties:
+      id:
+        type: "string"
+      description:
+        type: "string"
+      motionDetection:
+        type: boolean
+      continous:
+        type: boolean
+      devices:
+        type: array
+        description: "Array of serial numbers"
+        items:
+          type: string
+      sms:
+        $ref: "#/definitions/sms"
+  alarm:
+    type: "object"
+    properties:
+      id:
+        type: "string"
+      'on':
+        type: "boolean"
+      date:
+        type: "string"
+        format: "date-time"
+      description:
+        type: "string"
+      motionDetection:
+        type: boolean
+      continous:
+        type: boolean
+      sms:
+        $ref: "#/definitions/sms"
+      devices:
+        type: array
+        description: "Array of serial numbers"
+        items:
+          type: string
+  sms:
+    type: object
+    description: sms notification
+    properties:
+      mobileNumbers:
+        type: array
+        description: "Array of mobile numbers"
+        items:
+          type: string
+      username:
+        type: string
+      password:
+        type: string
+      fromNumber:
+        type: string
+      interval:
+        type: number
+        description: Number of minutes between sms if alerts keep repeating.
+  discoveredDevices:
+    type: "array"
+    items:
+      $ref: "#/definitions/discoveredDevice"
+  discoveredDevice:
+    type: "object"
+    properties:
+      serialNumber:
+        type: "string"
+      address:
+        type: "string"
+      model:
+        type: "string"
+      modelNumber:
+        type: "string"
+      lastDiscovered:
+        type: "string"
+        format: "date-time"
+      status:
+        $ref: "#/definitions/deviceStatus"
+  credentials:
+    type: "object"
+    properties:
+      username: 
+        type: "string"
+      password:
+        type: "string"
+  addDevice:
+    type: "object"
+    properties:
+      serialNumber:
+        type: "string"
+      address:
+        type: "string"
+      credentials:
+        $ref: "#/definitions/credentials"
+  devices:
+    type: "array"
+    items:
+      $ref: '#/definitions/device'
+  device:
+    type: "object"
+    properties:
+      serialNumber:
+        type: "string"
+      address:
+        type: "string"
+      username:
+        type: "string"
+      model:
+        type: "string"
+      snapshotUrl:
+        type: "string"
+      status:
+        $ref: "#/definitions/deviceStatus"
+  deviceStatus:
+    type: "object"
+    properties:
+      network:
+        type: boolean
+      credential:
+        type: boolean
+      error:
+        type: boolean
+      hasStatus:
+        type: boolean
+      lastStatusCheck:
+        type: "string"
+        format: "date-time"
+      message:
+        type: string
+      statusCode:
+        type: number
+        format: "integer"
+  error:
+    type: object
+    required:
+      - message
+    properties:
+      code:
+        type: integer
+        format: int64
+      message:
+        type: string
+  

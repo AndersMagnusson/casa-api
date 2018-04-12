@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<root xmlns="urn:schemas-upnp-org:device-1-0">
+<specVersion>
+<major>1</major>
+<minor>0</minor>
+</specVersion>
+<device>
+<deviceType>urn:schemas-upnp-org:device:Basic:1</deviceType>
+<friendlyName>AXIS M1014 - ACCC8E12DEDD</friendlyName>
+<manufacturer>AXIS</manufacturer>
+<manufacturerURL>http://www.axis.com/</manufacturerURL>
+<modelDescription>AXIS M1014 Fixed Network Camera</modelDescription>
+<modelName>AXIS M1014</modelName>
+<modelNumber>M1014</modelNumber>
+<modelURL>http://www.axis.com/</modelURL>
+<serialNumber>ACCC8E12DEDD</serialNumber>
+<UDN>uuid:Upnp-BasicDevice-1_0-ACCC8E12DEDD</UDN>
+<serviceList>
+<service>
+<serviceType>urn:axis-com:service:BasicService:1</serviceType>
+<serviceId>urn:axis-com:serviceId:BasicServiceId</serviceId>
+<controlURL>/upnp/control/BasicServiceId</controlURL>
+<eventSubURL>/upnp/event/BasicServiceId</eventSubURL>
+<SCPDURL>/scpd_basic.xml</SCPDURL>
+</service>
+</serviceList>
+<presentationURL>http://192.168.1.121:80/</presentationURL>
+</device>
+<URLBase>http://192.168.1.121:56091/</URLBase>
+</root>
