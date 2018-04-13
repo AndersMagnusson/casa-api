@@ -1,7 +1,7 @@
 package status
 
 import (
-	"casa/src/server/pkg/vapix"
+	"casa-api/pkg/vapix"
 	"sync"
 	"time"
 )

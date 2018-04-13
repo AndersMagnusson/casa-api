@@ -15,7 +15,7 @@ import (
 
 	strfmt "github.com/go-openapi/strfmt"
 
-	"casa/src/server/models"
+	"casa-api/models"
 )
 
 // NewSetDeviceCredentialsForDiscoveryParams creates a new SetDeviceCredentialsForDiscoveryParams object

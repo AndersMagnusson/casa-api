@@ -13,7 +13,7 @@ import (
 	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/runtime/middleware"
 
-	"casa/src/server/models"
+	"casa-api/models"
 )
 
 // NewAddDeviceParams creates a new AddDeviceParams object

@@ -1,7 +1,7 @@
 package vapix
 
 import (
-	"casa/src/server/pkg/httpnet"
+	"casa-api/pkg/httpnet"
 	"fmt"
 )
 
@@ -13,7 +13,7 @@ const (
 
 func CheckCredentials(address string, username string, password string) (int, error) {
 	url := fmt.Sprintf("%s://%s/%s", protocol, address, serialNumberPath)
-	resp, err := httpnet.DoBasic(url, "GET", nil, nil, httpnet.Credentials{Username: username, Password: password})
+	resp, err := httpnet.DoDigest(url, "GET", nil, nil, httpnet.Credentials{Username: username, Password: password})
 	if err != nil {
 		return 0, err
 	}

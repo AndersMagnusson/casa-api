@@ -1,8 +1,8 @@
 package subscribers
 
 import (
-	"casa/src/server/models"
-	"casa/src/server/pkg/httpnet"
+	"casa-api/models"
+	"casa-api/pkg/httpnet"
 	"fmt"
 	"net/url"
 	"time"

@@ -1,10 +1,10 @@
 package alerts
 
 import (
-	"casa/src/server/models"
-	"casa/src/server/pkg/alarms"
-	"casa/src/server/pkg/database"
-	"casa/src/server/pkg/publishers"
+	"casa-api/models"
+	"casa-api/pkg/alarms"
+	"casa-api/pkg/database"
+	"casa-api/pkg/publishers"
 	"fmt"
 
 	"encoding/json"

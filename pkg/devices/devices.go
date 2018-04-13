@@ -1,11 +1,11 @@
 package devices
 
 import (
-	"casa/src/server/models"
-	"casa/src/server/pkg/database"
-	"casa/src/server/pkg/discovery"
-	"casa/src/server/pkg/status"
-	"casa/src/server/pkg/vapix"
+	"casa-api/models"
+	"casa-api/pkg/database"
+	"casa-api/pkg/discovery"
+	"casa-api/pkg/status"
+	"casa-api/pkg/vapix"
 	"encoding/json"
 	"errors"
 	"time"

@@ -6,6 +6,9 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"strconv"
+
+	"github.com/bobziuchkovski/digest"
 )
 
 var client = http.Client{}
@@ -28,19 +31,26 @@ func DoBasic(url string, method string, postData interface{}, respData interface
 	return do(url, method, postData, respData, credentials)
 }
 
+func DoDigest(url string, method string, postData interface{}, respData interface{}, credentials Credentials) (Response, error) {
+	d := Response{StatusCode: -1}
+
+	req, err := createRequest(url, method, postData)
+	if err != nil {
+		return d, err
+	}
+
+	t := digest.NewTransport(credentials.Username, credentials.Password)
+	resp, err := t.RoundTrip(req)
+
+	return parseResponse(resp, respData)
+}
+
 func do(url string, method string, postData interface{}, respData interface{}, credentials Credentials) (Response, error) {
 	d := Response{StatusCode: -1}
-	var buffer io.Reader
-	if postData != nil {
-		jsonBytes, err := json.Marshal(postData)
-		if err != nil {
-			return d, err
-		}
-		buffer = bytes.NewBuffer(jsonBytes)
-	}
-	req, err := http.NewRequest(method, url, buffer)
-	if buffer != nil {
-		req.Header.Add("Content-Type", "application/json")
+
+	req, err := createRequest(url, method, postData)
+	if err != nil {
+		return d, err
 	}
 
 	if len(credentials.Password) > 0 || len(credentials.Username) > 0 {
@@ -50,6 +60,32 @@ func do(url string, method string, postData interface{}, respData interface{}, c
 	if err != nil {
 		return d, err
 	}
+
+	return parseResponse(resp, respData)
+}
+
+func createRequest(url string, method string, postData interface{}) (*http.Request, error) {
+	var buffer io.Reader
+	if postData != nil {
+		jsonBytes, err := json.Marshal(postData)
+		if err != nil {
+			return nil, err
+		}
+		buffer = bytes.NewBuffer(jsonBytes)
+	}
+	req, err := http.NewRequest(method, url, buffer)
+	if err != nil {
+		return nil, err
+	}
+	if buffer != nil {
+		req.Header.Add("Content-Type", "application/json")
+		req.Header.Add("Axis-Orig-Sw", strconv.FormatBool(true))
+	}
+	return req, nil
+}
+
+func parseResponse(resp *http.Response, respData interface{}) (Response, error) {
+	d := Response{StatusCode: -1}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)

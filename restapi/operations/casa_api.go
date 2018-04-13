@@ -19,10 +19,10 @@ import (
 	strfmt "github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 
-	"casa/src/server/restapi/operations/alarms"
-	"casa/src/server/restapi/operations/alerts"
-	"casa/src/server/restapi/operations/devices"
-	"casa/src/server/restapi/operations/discovery"
+	"casa-api/restapi/operations/alarms"
+	"casa-api/restapi/operations/alerts"
+	"casa-api/restapi/operations/devices"
+	"casa-api/restapi/operations/discovery"
 )
 
 // NewCasaAPI creates a new Casa instance

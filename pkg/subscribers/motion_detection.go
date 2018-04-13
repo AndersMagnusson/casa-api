@@ -1,8 +1,8 @@
 package subscribers
 
 import (
-	"casa/src/server/models"
-	"casa/src/server/pkg/devices"
+	"casa-api/models"
+	"casa-api/pkg/devices"
 	"context"
 
 	"github.com/AndersMagnusson/axisevents"

@@ -1,8 +1,8 @@
 package discovery
 
 import (
-	"casa/src/server/pkg/httpnet"
-	"casa/src/server/pkg/status"
+	"casa-api/pkg/httpnet"
+	"casa-api/pkg/status"
 	"encoding/xml"
 	"fmt"
 	"log"
@@ -117,8 +117,11 @@ func Start() {
 		discoveryRunningLock.Unlock()
 	}()
 
+	addDefaultDiscoveredDevice()
+
 	listener := &clientListener{}
 	c, err := gossdp.NewSsdpClient(listener)
+
 	if err != nil {
 		log.Println("Failed to start client: ", err)
 		return
@@ -126,10 +129,38 @@ func Start() {
 	defer c.Stop()
 	go c.Start()
 
-	c.ListenFor("urn:schemas-upnp-org:device:Basic:1")
+	err = c.ListenFor("urn:schemas-upnp-org:device:Basic:1")
+	if err != nil {
+		log.Println("ssdp, failed to listen for ssdp responses")
+	}
 	// err = c.ListenFor("urn:fromkeith:test:web:1")
 	time.Sleep(30 * time.Second)
 	IsDiscoveryRunning.Done()
+}
+
+// addDefaultDiscoveredDevice TODO Remove just for populating list when discovery is not working.
+func addDefaultDiscoveredDevice() {
+	discoveredDevices["00408CE36125"] = AxisDevice{
+		SerialNumber:   "00408CE36125",
+		Address:        "172.25.125.146",
+		LastDiscovered: time.Now(),
+		ModelName:      "AXIS M3005",
+		ModelNumber:    "M3005",
+	}
+	discoveredDevices["ACCC8E6D52D9"] = AxisDevice{
+		SerialNumber:   "ACCC8E6D52D9",
+		Address:        "172.25.125.226",
+		LastDiscovered: time.Now(),
+		ModelName:      "AXIS Companion Dome V",
+		ModelNumber:    "Companion Dome V",
+	}
+	discoveredDevices["00408CE36125"] = AxisDevice{
+		SerialNumber:   "00408CE36125",
+		Address:        "172.25.125.146",
+		LastDiscovered: time.Now(),
+		ModelName:      "AXIS M3005",
+		ModelNumber:    "M3005",
+	}
 }
 
 func DiscoveryRoutine() {

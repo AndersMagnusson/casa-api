@@ -15,7 +15,7 @@ import (
 
 	strfmt "github.com/go-openapi/strfmt"
 
-	"casa/src/server/models"
+	"casa-api/models"
 )
 
 // NewAddAlertParams creates a new AddAlertParams object

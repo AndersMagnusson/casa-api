@@ -20,7 +20,7 @@ import (
 	flags "github.com/jessevdk/go-flags"
 	graceful "github.com/tylerb/graceful"
 
-	"casa/src/server/restapi/operations"
+	"casa-api/restapi/operations"
 )
 
 const (

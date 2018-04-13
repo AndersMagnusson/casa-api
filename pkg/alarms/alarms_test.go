@@ -1,8 +1,8 @@
 package alarms
 
 import (
-	"casa/src/server/models"
-	"casa/src/server/pkg/database"
+	"casa-api/models"
+	"casa-api/pkg/database"
 	"os"
 	"reflect"
 	"testing"

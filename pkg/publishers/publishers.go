@@ -1,7 +1,7 @@
 package publishers
 
 import (
-	"casa/src/server/models"
+	"casa-api/models"
 )
 
 var alarmEvents = make([]AlarmEvent, 0)

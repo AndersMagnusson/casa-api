@@ -15,7 +15,7 @@ import (
 
 	strfmt "github.com/go-openapi/strfmt"
 
-	"casa/src/server/models"
+	"casa-api/models"
 )
 
 // NewToggleAlarmParams creates a new ToggleAlarmParams object

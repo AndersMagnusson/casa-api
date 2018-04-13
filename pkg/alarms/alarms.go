@@ -8,9 +8,9 @@ import (
 
 	"github.com/boltdb/bolt"
 
-	"casa/src/server/models"
-	"casa/src/server/pkg/database"
-	"casa/src/server/pkg/publishers"
+	"casa-api/models"
+	"casa-api/pkg/database"
+	"casa-api/pkg/publishers"
 
 	strfmt "github.com/go-openapi/strfmt"
 )
@@ -191,8 +191,9 @@ func ToggleAlarm(alarmID string, on bool) (*models.ToggleAlarm, error) {
 			if err == nil {
 				if on {
 					publishers.On(current)
+				} else {
+					publishers.Off(current)
 				}
-				publishers.Off(current)
 			}
 			return err
 		}

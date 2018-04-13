@@ -1,6 +1,6 @@
 package subscribers
 
-import "casa/src/server/pkg/publishers"
+import "casa-api/pkg/publishers"
 
 func Enable() {
 	motionDetectionSubscriber := motionDetectionHandler{}

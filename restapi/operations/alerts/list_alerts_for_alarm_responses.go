@@ -10,7 +10,7 @@ import (
 
 	"github.com/go-openapi/runtime"
 
-	"casa/src/server/models"
+	"casa-api/models"
 )
 
 // ListAlertsForAlarmOKCode is the HTTP code returned for type ListAlertsForAlarmOK
