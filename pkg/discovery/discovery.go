@@ -117,7 +117,7 @@ func Start() {
 		discoveryRunningLock.Unlock()
 	}()
 
-	addDefaultDiscoveredDevice()
+	// addDefaultDiscoveredDevice()
 
 	listener := &clientListener{}
 	c, err := gossdp.NewSsdpClient(listener)
@@ -133,7 +133,6 @@ func Start() {
 	if err != nil {
 		log.Println("ssdp, failed to listen for ssdp responses")
 	}
-	// err = c.ListenFor("urn:fromkeith:test:web:1")
 	time.Sleep(30 * time.Second)
 	IsDiscoveryRunning.Done()
 }

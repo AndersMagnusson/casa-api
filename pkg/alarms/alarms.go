@@ -17,7 +17,7 @@ import (
 
 var (
 	alarmBucket  = "alarms"
-	maxLogLength = 100
+	maxLogLength = 50
 )
 
 //var alarmLogBucket = "alarmslog"
@@ -179,7 +179,7 @@ func ToggleAlarm(alarmID string, on bool) (*models.ToggleAlarm, error) {
 
 			logLength := len(existingLogs)
 			if logLength > maxLogLength {
-				existingLogs = existingLogs[logLength-maxLogLength : logLength]
+				existingLogs = existingLogs[logLength-maxLogLength:]
 			}
 
 			encoded, err = json.Marshal(existingLogs)

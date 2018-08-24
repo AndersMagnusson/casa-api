@@ -18,7 +18,7 @@ var lastSms = time.Time{}
 func (h smsSubscriber) Alert(alarm models.Alarm, alert models.Alert) {
 	if alarm.Sms != nil && len(alarm.Sms.MobileNumbers) > 0 {
 		diff := time.Now().Sub(lastSms)
-		logrus.Infof("SMS diff:", diff.Nanoseconds)
+		logrus.Infof("SMS diff: %d", diff.Nanoseconds)
 		if diff.Nanoseconds() > int64(alarm.Sms.Interval)*60*1000*1000*1000 {
 			for _, toNumber := range alarm.Sms.MobileNumbers {
 				smsURL := fmt.Sprintf("https://se-1.cellsynt.net/sms.php?username=%s&password=%s&destination=%s&originatortype=numeric&originator=%s&charset=UTF-8&text=%s",

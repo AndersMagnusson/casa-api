@@ -38,6 +38,7 @@ func DoDigest(url string, method string, postData interface{}, respData interfac
 	if err != nil {
 		return d, err
 	}
+	// req.Header.Add("User-Agent", "Axis Companion/3.45.018")
 
 	t := digest.NewTransport(credentials.Username, credentials.Password)
 	resp, err := t.RoundTrip(req)

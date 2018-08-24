@@ -4,6 +4,8 @@ import (
 	"casa-api/pkg/vapix"
 	"sync"
 	"time"
+
+	"github.com/sirupsen/logrus"
 )
 
 var deviceStatusesLock sync.Mutex
@@ -19,6 +21,11 @@ type Status struct {
 	Message         string
 	Username        string
 	Password        string
+	VmdVersion      int
+}
+
+func (s *Status) IsOk() bool {
+	return s.Credential && s.Network
 }
 
 func CheckStatus(serialNumber, address, username, password string) {
@@ -79,6 +86,16 @@ func check(address, username, password string) Status {
 	statusCode, _ := vapix.CheckCredentials(address, username, password)
 	status.StatusCode = statusCode
 	if statusCode == 200 {
+		vmdVersion, err := vapix.GetHighestVmdVersion(address, username, password)
+		if err != nil {
+			// TODO LOG
+			logrus.Errorf("Failed to get vmd version for %s, %s", address, err)
+			status.VmdVersion = 2
+		} else {
+
+			logrus.Infof("Using vmd version %d for %s", vmdVersion, address)
+			status.VmdVersion = vmdVersion
+		}
 		status.Network = true
 		status.Credential = true
 		status.Message = "ok"

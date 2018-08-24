@@ -19,7 +19,7 @@ import (
 
 var (
 	alertBucket  = "alerts"
-	maxLogLength = 100
+	maxLogLength = 50
 )
 
 func CreateBucketIfNotExists() error {
@@ -63,9 +63,9 @@ func HandleAlert(alarmID string, id string, addAlert models.AddAlert) error {
 				existingLogs[id] = []models.Alert{alert}
 			}
 
-			logLength := len(existingLogs)
+			logLength := len(existingLogs[id])
 			if logLength > maxLogLength {
-				existingLogs[id] = existingLogs[id][logLength-maxLogLength : logLength]
+				existingLogs[id] = existingLogs[id][logLength-maxLogLength:]
 			}
 
 			encoded, err := json.Marshal(existingLogs)

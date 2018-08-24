@@ -1,0 +1,1 @@
+C:\Users\Anders\Documents\git\go\src\casa-api\grpc> protoc -I . ./casa/protos/casa.proto --go_out=plugins=grpc:./
