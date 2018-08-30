@@ -2,7 +2,9 @@
 package restapi
 
 import (
+	"context"
 	"crypto/tls"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -14,8 +16,10 @@ import (
 	runtime "github.com/go-openapi/runtime"
 	middleware "github.com/go-openapi/runtime/middleware"
 	strfmt "github.com/go-openapi/strfmt"
+	"github.com/go-openapi/swag"
 	graceful "github.com/tylerb/graceful"
 
+	"casa-api/grpc/casa/pkg/client"
 	"casa-api/models"
 	alarmsFunc "casa-api/pkg/alarms"
 	alertsFunc "casa-api/pkg/alerts"
@@ -36,14 +40,27 @@ import (
 
 //go:generate swagger generate server --target .. --name MagnussonHomeSecurity --spec ..\swagger.yaml
 
+var opts = &struct {
+	Location string `long:"location" description:"default to localhost other option is cloud" default:"localhost"`
+	Group    struct {
+		Location bool `long:"location2"`
+	} `group:"Grouped Options"`
+}{}
+
 func configureFlags(api *operations.CasaAPI) {
-	// api.CommandLineOptionsGroups = []swag.CommandLineOptionsGroup{ ... }
+	// var opts = &struct {
+	// 	Location string `long:"location" description:"default to localhost other option is cloud" default:"localhost"`
+	// 	Group    struct {
+	// 		Location bool `long:"location2"`
+	// 	} `group:"Grouped Options"`
+	// }{}
+	location := swag.CommandLineOptionsGroup{ShortDescription: "Grouped Options", LongDescription: "", Options: opts}
+	api.CommandLineOptionsGroups = []swag.CommandLineOptionsGroup{location}
 }
 
 func configureAPI(api *operations.CasaAPI) http.Handler {
 	// configure the api here
 	api.ServeError = errors.ServeError
-
 	// Set your custom logger if needed. Default one is log.Printf
 	// Expected interface func(string, ...interface{})
 	//
@@ -53,6 +70,7 @@ func configureAPI(api *operations.CasaAPI) http.Handler {
 
 	api.JSONConsumer = runtime.JSONConsumer()
 	api.JSONProducer = runtime.JSONProducer()
+	fmt.Println(opts.Location)
 
 	db, err := bolt.Open("casa.db", 0600, nil)
 	if err != nil {
@@ -77,6 +95,18 @@ func configureAPI(api *operations.CasaAPI) http.Handler {
 	discoveryFunc.DiscoveryRoutine()
 	devicesFunc.StartStatusRoutine(time.Minute * 20)
 
+	if opts.Location == "cloud" {
+		// start grpc server
+		c := client.Client("127.0.0.1:6262", "password", "hubba")
+		ctx := context.Background()
+		err := c.Run(ctx)
+		if err != nil {
+			fmt.Println(err)
+		}
+	} else {
+		// start grpcs client
+
+	}
 	// alerts
 	api.AlertsAddAlertHandler = alerts.AddAlertHandlerFunc(func(params alerts.AddAlertParams) middleware.Responder {
 		err := alertsFunc.HandleAlert(params.AlarmID, params.ID, *params.Body)
@@ -324,5 +354,5 @@ func setupMiddlewares(handler http.Handler) http.Handler {
 // The middleware configuration happens before anything, this middleware also applies to serving the swagger.json document.
 // So this is a good place to plug in a panic handling middleware, logging and metrics
 func setupGlobalMiddleware(next http.Handler) http.Handler {
-	return Web()(next)
+	return Web(opts.Location)(next)
 }

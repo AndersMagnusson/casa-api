@@ -14,7 +14,7 @@
       "host": "127.0.0.1",
       "program": "${workspaceRoot}\\cmd\\casa-server",
       "env": {},
-      "args": ["--port", "3030"],
+      "args": ["--port", "3030", "--location", "cloud"],
       "showLog": true,
       "cwd": "${workspaceRoot}\\cmd\\casa-server"
     }

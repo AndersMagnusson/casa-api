@@ -38,7 +38,6 @@ func main() {
 			log.Fatalln(err)
 		}
 	}
-
 	if _, err := parser.Parse(); err != nil {
 		code := 1
 		if fe, ok := err.(*flags.Error); ok {

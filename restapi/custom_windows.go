@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func Web() func(http.Handler) http.Handler {
+func Web(location string) func(http.Handler) http.Handler {
 	fs := http.FileServer(http.Dir("frontend"))
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {

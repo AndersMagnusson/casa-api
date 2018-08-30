@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"net"
 	"sync"
+	"time"
 
 	"github.com/golang/protobuf/ptypes"
 	"github.com/sirupsen/logrus"
@@ -21,16 +22,20 @@ import (
 
 const tokenHeader = "x-communication-token"
 
+type ClientMessage struct {
+	UserID  string
+	Message *communication.StreamResponse
+}
+
 type server struct {
 	Host, Password string
 
-	Broadcast chan communication.StreamResponse
+	StreamServers map[string]communication.Casa_StreamServer
+	userIDs       map[string]string
+	Messages      chan ClientMessage
 
-	ClientNames   map[string]string
-	ClientStreams map[string]chan communication.StreamResponse
-
-	namesMtx, streamsMtx sync.RWMutex
-	tokenRemove          string
+	userIDsMtx, streamServersMtx sync.RWMutex
+	tokenRemove                  string
 }
 
 func Server(host, pass string) *server {
@@ -38,17 +43,17 @@ func Server(host, pass string) *server {
 		Host:     host,
 		Password: pass,
 
-		Broadcast: make(chan communication.StreamResponse, 1000),
+		userIDs: make(map[string]string),
 
-		ClientNames:   make(map[string]string),
-		ClientStreams: make(map[string]chan communication.StreamResponse),
+		StreamServers: make(map[string]communication.Casa_StreamServer),
+
+		Messages: make(chan ClientMessage),
 	}
 }
 
 func (s *server) Run(ctx context.Context) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
-
 	logrus.Info("starting on %s with password %q",
 		s.Host, s.Password)
 
@@ -61,11 +66,32 @@ func (s *server) Run(ctx context.Context) error {
 			"server unable to bind on provided host")
 	}
 
-	go s.broadcast(ctx)
+	go func() {
+		for {
+			time.Sleep(time.Second * 1)
+			logrus.Info("Send to client")
+			alarms := &communication.StreamResponse_Alarms{Id: "test", Identifier: "alarms", Method: "test"}
+
+			res := &communication.StreamResponse{
+				Event:     &communication.StreamResponse_ClientAlarms{ClientAlarms: alarms},
+				Timestamp: ptypes.TimestampNow(),
+			}
+
+			m := ClientMessage{
+				UserID:  "hubba",
+				Message: res,
+			}
+			s.Messages <- m
+		}
+	}()
 
 	go func() {
 		srv.Serve(l)
 		cancel()
+	}()
+
+	go func() {
+		s.listenToMessage(ctx)
 	}()
 
 	<-ctx.Done()
@@ -82,6 +108,29 @@ func (s *server) Run(ctx context.Context) error {
 	return nil
 }
 
+func (s *server) listenToMessage(ctx context.Context) {
+	for {
+		select {
+		case <-ctx.Done():
+			logrus.Info("Finished listen to messages")
+			return
+		case m := <-s.Messages:
+			logrus.Info("Sending message to client")
+			streamServer, ok := s.getStreamServer(m.UserID)
+			if ok {
+				err := streamServer.Send(m.Message)
+				if err != nil {
+					logrus.Warnf("Failed to send message to client: %s, %s", m.UserID, err)
+				} else {
+					logrus.Infof("Send message to %s", m.UserID)
+				}
+			} else {
+				logrus.Infof("Could not find server for:%s", m.UserID)
+			}
+		}
+	}
+}
+
 func (s *server) Login(ctx context.Context, req *communication.LoginRequest) (*communication.LoginResponse, error) {
 	switch {
 	case req.Password != s.Password:
@@ -91,7 +140,7 @@ func (s *server) Login(ctx context.Context, req *communication.LoginRequest) (*c
 	}
 
 	tkn := s.genToken()
-	s.setName(tkn, req.Name)
+	s.setUserID(tkn, req.Name)
 	s.tokenRemove = tkn
 
 	logrus.Infof("%s (%s) has logged in", tkn, req.Name)
@@ -107,30 +156,27 @@ func (s *server) Login(ctx context.Context, req *communication.LoginRequest) (*c
 }
 
 func (s *server) Logout(ctx context.Context, req *communication.LogoutRequest) (*communication.LogoutResponse, error) {
-	name, ok := s.delName(req.Token)
+	ok, userID := s.delUserID(req.Token)
 	if !ok {
 		return nil, status.Error(codes.NotFound, "token not found")
 	}
 
-	logrus.Infof("%s (%s) has logged out", req.Token, name)
-
-	// s.Broadcast <- communication.StreamResponse{
-	// 	Timestamp: ptypes.TimestampNow(),
-	// 	Event: &communication.StreamResponse_Logout{
-	// 		Name: name,
-	// 	},
-	// }
+	logrus.Infof("%s (%s) has logged out", req.Token, userID)
 
 	return new(communication.LogoutResponse), nil
 }
 
-func (s *server) sendAlarms(ctx context.Context, token string, message *communication.StreamResponse_Alarms) {
-	res := communication.StreamResponse{
+func (s *server) sendAlarms(ctx context.Context, userID string, message *communication.StreamResponse_Alarms) (bool, error) {
+	res := &communication.StreamResponse{
 		Event:     &communication.StreamResponse_ClientAlarms{ClientAlarms: message},
 		Timestamp: ptypes.TimestampNow(),
 	}
 
-	s.sendMessage(ctx, token, res)
+	streamServer, ok := s.getStreamServer(userID)
+	if ok {
+		return true, streamServer.Send(res)
+	}
+	return false, nil
 }
 
 func (s *server) Stream(srv communication.Casa_StreamServer) error {
@@ -139,22 +185,26 @@ func (s *server) Stream(srv communication.Casa_StreamServer) error {
 		return status.Error(codes.Unauthenticated, "missing token header")
 	}
 
-	_, ok = s.getName(tkn)
+	userID, ok := s.getUserID(tkn)
 	if !ok {
 		return status.Error(codes.Unauthenticated, "invalid token")
 	}
 
-	go s.sendBroadcasts(srv, tkn)
+	s.setStreamServer(userID, srv)
 
 	for {
 		req, err := srv.Recv()
 		if err == io.EOF {
 			break
 		} else if err != nil {
+			logrus.Warnf("GRPC stream stopped: %s", err)
+			s.delStreamServer(userID)
+			s.delUserID(userID)
 			return err
 		}
 
 		id := req.GetId()
+		logrus.Infof("Received message with id: %s", id)
 
 		if id == "/alarms" {
 			alarms := &communication.StreamResponse_Alarms{Id: id, Identifier: "alarms", Method: "test"}
@@ -176,114 +226,57 @@ func (s *server) Stream(srv communication.Casa_StreamServer) error {
 	return srv.Context().Err()
 }
 
-func (s *server) sendBroadcasts(srv communication.Casa_StreamServer, tkn string) {
-	stream := s.openStream(tkn)
-	s.sendAlarms(context.Background(), "tokenRemove", &communication.StreamResponse_Alarms{Id: "hej", Identifier: "alarms", Method: "get"})
-	defer s.closeStream(tkn)
-
-	for {
-		select {
-		case <-srv.Context().Done():
-			return
-		case res := <-stream:
-			if s, ok := status.FromError(srv.Send(&res)); ok {
-				switch s.Code() {
-				case codes.OK:
-					// noop
-				case codes.Unavailable, codes.Canceled, codes.DeadlineExceeded:
-					logrus.Infof("client (%s) terminated connection", tkn)
-					return
-				default:
-					logrus.Infof("failed to send to client (%s): %v", tkn, s.Err())
-					return
-				}
-			}
-		}
-	}
-}
-
-func (s *server) broadcast(ctx context.Context) {
-	for res := range s.Broadcast {
-		s.streamsMtx.RLock()
-		for _, stream := range s.ClientStreams {
-			select {
-			case stream <- res:
-				// noop
-			default:
-				logrus.Infof("client stream full, dropping message")
-			}
-		}
-		s.streamsMtx.RUnlock()
-	}
-}
-
-func (s *server) sendMessage(ctx context.Context, clientID string, res communication.StreamResponse) {
-	s.streamsMtx.RLock()
-	for id, stream := range s.ClientStreams {
-		if id == clientID {
-			select {
-			case stream <- res:
-				// noop
-			default:
-				logrus.Infof("client stream full, dropping message")
-			}
-			break
-		}
-	}
-	s.streamsMtx.RUnlock()
-}
-
-func (s *server) openStream(tkn string) (stream chan communication.StreamResponse) {
-	stream = make(chan communication.StreamResponse, 100)
-
-	s.streamsMtx.Lock()
-	s.ClientStreams[tkn] = stream
-	s.streamsMtx.Unlock()
-
-	logrus.Infof("opened stream for client %s", tkn)
-
-	return
-}
-
-func (s *server) closeStream(tkn string) {
-	s.streamsMtx.Lock()
-
-	if stream, ok := s.ClientStreams[tkn]; ok {
-		delete(s.ClientStreams, tkn)
-		close(stream)
-	}
-
-	logrus.Infof("closed stream for client %s", tkn)
-
-	s.streamsMtx.Unlock()
-}
-
 func (s *server) genToken() string {
 	tkn := make([]byte, 4)
 	rand.Read(tkn)
 	return fmt.Sprintf("%x", tkn)
 }
 
-func (s *server) getName(tkn string) (name string, ok bool) {
-	s.namesMtx.RLock()
-	name, ok = s.ClientNames[tkn]
-	s.namesMtx.RUnlock()
+func (s *server) getUserID(token string) (UserID string, ok bool) {
+	s.userIDsMtx.RLock()
+	UserID, ok = s.userIDs[token]
+	s.userIDsMtx.RUnlock()
 	return
 }
 
-func (s *server) setName(tkn string, name string) {
-	s.namesMtx.Lock()
-	s.ClientNames[tkn] = name
-	s.namesMtx.Unlock()
+func (s *server) setUserID(token string, userID string) {
+	s.userIDsMtx.Lock()
+	s.userIDs[token] = userID
+	s.userIDsMtx.Unlock()
 }
 
-func (s *server) delName(tkn string) (name string, ok bool) {
-	name, ok = s.getName(tkn)
+func (s *server) delUserID(token string) (ok bool, userID string) {
+	userID, ok = s.getUserID(token)
 
 	if ok {
-		s.namesMtx.Lock()
-		delete(s.ClientNames, tkn)
-		s.namesMtx.Unlock()
+		s.userIDsMtx.Lock()
+		delete(s.userIDs, token)
+		s.userIDsMtx.Unlock()
+	}
+
+	return
+}
+
+func (s *server) getStreamServer(userID string) (streamServer communication.Casa_StreamServer, ok bool) {
+	s.streamServersMtx.RLock()
+	streamServer, ok = s.StreamServers[userID]
+	s.streamServersMtx.RUnlock()
+	return
+}
+
+func (s *server) setStreamServer(userID string, streamServer communication.Casa_StreamServer) {
+	s.streamServersMtx.Lock()
+	s.StreamServers[userID] = streamServer
+	s.streamServersMtx.Unlock()
+}
+
+func (s *server) delStreamServer(userID string) (ok bool) {
+	_, ok = s.getStreamServer(userID)
+
+	if ok {
+		s.streamServersMtx.Lock()
+		delete(s.StreamServers, userID)
+		s.streamServersMtx.Unlock()
 	}
 
 	return

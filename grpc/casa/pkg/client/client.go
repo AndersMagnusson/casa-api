@@ -1,10 +1,8 @@
 package client
 
 import (
-	"bufio"
 	"casa-api/grpc/casa/pkg/communication"
 	"io"
-	"os"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -116,25 +114,31 @@ func (c *client) receive(sc communication.Casa_StreamClient) error {
 }
 
 func (c *client) send(client communication.Casa_StreamClient) {
-	sc := bufio.NewScanner(os.Stdin)
-	sc.Split(bufio.ScanLines)
 	entry := logrus.WithField("grpc", "send")
-	for {
-		select {
-		case <-client.Context().Done():
-			entry.Debug("client send loop disconnected")
-		default:
-			if sc.Scan() {
-				if err := client.Send(&communication.StreamRequest{Message: sc.Text()}); err != nil {
-					entry.Debug("failed to send message: %v", err)
-					return
-				}
-			} else {
-				entry.Infof("input scanner failure: %v", sc.Err())
-				return
-			}
-		}
+	if err := client.Send(&communication.StreamRequest{Id: "/alarms", Message: "hej"}); err != nil {
+		entry.Warnf("failed to send message: %v", err)
+		return
 	}
+	entry.Info("Sent client stream")
+	// sc := bufio.NewScanner(os.Stdin)
+	// sc.Split(bufio.ScanLines)
+	// entry := logrus.WithField("grpc", "send")
+	// for {
+	// 	select {
+	// 	case <-client.Context().Done():
+	// 		entry.Debug("client send loop disconnected")
+	// 	default:
+	// 		if sc.Scan() {
+	// 			if err := client.Send(&communication.StreamRequest{Message: sc.Text()}); err != nil {
+	// 				entry.Debug("failed to send message: %v", err)
+	// 				return
+	// 			}
+	// 		} else {
+	// 			entry.Infof("input scanner failure: %v", sc.Err())
+	// 			return
+	// 		}
+	// 	}
+	// }
 }
 
 func (c *client) login(ctx context.Context) (string, error) {
