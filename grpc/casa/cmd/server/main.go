@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	s := server.Server("127.0.0.1:6262", "password")
+	s := server.Server(":50051", "password")
 	ctx := context.Background()
 	err := s.Run(ctx)
 

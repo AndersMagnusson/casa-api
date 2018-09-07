@@ -1,1 +1,2 @@
-C:\Users\Anders\Documents\git\go\src\casa-api\grpc> protoc -I . ./casa/protos/casa.proto --go_out=plugins=grpc:./
+C:\Users\Anders\Documents\git\go\src\casa-api\grpc> protoc -I . ./casa/pkg/communication/casa.proto --include_imports --include_source_info --go_out=plugins=grpc:./
+--descriptor_set_out=api_descriptor.pb

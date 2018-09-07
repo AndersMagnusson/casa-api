@@ -1,0 +1,8 @@
+type: google.api.Service
+config_version: 3
+
+name: casa.endpoints.safeathome-213613.cloud.goog
+
+title: Casa gRPC API
+apis:
+- name: communication.Casa
